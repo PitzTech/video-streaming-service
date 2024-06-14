@@ -1,14 +1,18 @@
-import logging
 from flask_socketio import SocketIO
 
 class TransmissionHandler:
-    def __init__(self, socketio: SocketIO, logger):
+    def __init__(self, socketio, logger):
+        """
+        Inicializa o TransmissionHandler com os eventos SocketIO necessários.
+
+        Args:
+            socketio (SocketIO): Instância do SocketIO.
+            logger (Logger): Instância do logger para registro de logs.
+        """
         self.socketio = socketio
         self.transmissions = {}
         self.watchers = {}
         self.logger = logger
-
-        # Registrar eventos Socket.IO
         self.socketio.on_event('start_transmission', self.start_transmission)
         self.socketio.on_event('stop_transmission', self.stop_transmission)
         self.socketio.on_event('broadcast_frame', self.handle_frame)
@@ -16,51 +20,67 @@ class TransmissionHandler:
         self.socketio.on_event('join_transmission', self.join_transmission)
 
     def start_transmission(self, data):
-        sid = data.get('sid')
-        user_name = data.get('user_name')
-        user_id = data.get('user_id')
+        """
+        Inicia uma transmissão e notifica os clientes.
 
-        self.transmissions[user_id] = user_name
-        self.logger.info(f"Transmissão iniciada por {user_name} ({user_id})")
-        self.logger.info(f"Emitindo update_transmissions com transmissões: {list(self.transmissions.values())}")
+        Args:
+            data (dict): Dados da transmissão.
+        """
+        sid = data.get('sid')
+        user_id = data.get('user_id', sid)
+        name = data.get('user_name', user_id)
+        self.transmissions[user_id] = name
+        self.logger.info(f"Transmissão iniciada por {name} ({user_id})")
         self.socketio.emit('update_transmissions', {'transmissions': list(self.transmissions.values())})
 
     def stop_transmission(self, data):
+        """
+        Encerra uma transmissão e notifica os clientes.
+
+        Args:
+            data (dict): Dados da transmissão.
+        """
         sid = data.get('sid')
-        user_name = data.get('user_name')
-        ip = self.socketio.server.environ[sid]['REMOTE_ADDR']
-        user_id = f"{ip}_{user_name}"
+        user_id = data.get('user_id', sid)
+        name = data.get('user_name', user_id)
 
         if user_id in self.transmissions:
             del self.transmissions[user_id]
-            self.logger.info(f"Transmissão encerrada por {user_name} ({user_id})")
-        self.logger.info(f"Emitindo update_transmissions com transmissões: {list(self.transmissions.values())}")
+            self.logger.info(f"Transmissão encerrada por {name} ({user_id})")
         self.socketio.emit('update_transmissions', {'transmissions': list(self.transmissions.values())})
 
     def handle_frame(self, data):
-        user_id = data['user_id']
-        self.logger.info(f"watchers: {self.watchers}")
-        self.logger.info(f"user_id: {user_id}")
+        """
+        Lida com os frames transmitidos e os envia para os espectadores.
 
+        Args:
+            data (dict): Dados do frame.
+        """
+        user_id = data['user_id']
         if user_id in self.watchers:
-            self.logger.info(f"entrou if")
             for watcher in self.watchers[user_id]:
-                self.logger.info(f"Emitindo frame para watcher: {watcher['sid']}")
-                self.logger.info(f"Dados do frame: {len(data['frame'])} bytes")
                 self.socketio.emit('broadcast_frame', {'frame': data['frame']}, room=watcher['sid'])
 
     def list_transmissions(self, data):
+        """
+        Lista as transmissões ativas e notifica os clientes.
+
+        Args:
+            data (dict): Dados da solicitação.
+        """
         sid = data.get('sid')
-        self.logger.info("Recebido pedido de listagem de transmissões")
         if not self.transmissions:
-            self.logger.info("Nenhuma transmissão disponível.")
             self.socketio.emit('no_transmissions', room=sid)
         else:
-            self.logger.info(f"Transmissões ativas: {self.transmissions}")
-            self.logger.info(f"Emitindo update_transmissions com transmissões: {list(self.transmissions.values())}")
-            self.socketio.emit('update_transmissions', {'transmissions': list(self.transmissions.values())})
+            self.socketio.emit('update_transmissions', {'transmissions': list(self.transmissions.values())}, room=sid)
 
     def join_transmission(self, data):
+        """
+        Permite que um espectador se junte a uma transmissão.
+
+        Args:
+            data (dict): Dados da solicitação.
+        """
         sid = data.get('sid')
         user_id = data.get('user_id')
         transmission_name = data.get('transmission_name')
@@ -70,7 +90,5 @@ class TransmissionHandler:
                     self.watchers[tid] = []
                 self.watchers[tid].append({'sid': sid, 'user_id': user_id})
                 self.socketio.emit('joined_transmission', room=sid)
-                self.logger.info(f"Usuário {sid} ({user_id}) juntou-se à transmissão {transmission_name}")
                 return
-        self.logger.info(f"Transmissão {transmission_name} não encontrada para {sid}")
         self.socketio.emit('transmission_not_found', room=sid)

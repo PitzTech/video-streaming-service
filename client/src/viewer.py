@@ -26,7 +26,7 @@ class Viewer:
         self.viewer_window = None
 
     def list_transmissions(self):
-        self.logger.info("Listando transmissões")
+        self.logger.info(f"Listando transmissões com sid: {self.sio.sid}")
         self.sio.emit('list_transmissions', {'sid': self.sio.sid})
         self.logger.info("Evento 'list_transmissions' emitido para o servidor")
 
@@ -50,11 +50,12 @@ class Viewer:
             self.logger.info(f"Tentando se conectar à transmissão: {transmission_name}")
             user_id = f"{get_ip()}_Viewer"
             self.sio.emit('join_transmission', {'transmission_name': transmission_name, 'sid': self.sio.sid, 'user_id': user_id})
-            self.viewer_window = ViewerWindow(self.sio, f"Viewer_{transmission_name}", self.logger)
+            self.viewer_window = ViewerWindow(self.sio, user_id, self.logger)
             self.viewer_window.start()
         else:
             print("Escolha inválida, tente novamente.")
             self.prompt_for_transmission()
+
 
     def no_transmissions(self, data):
         self.logger.info("Nenhuma transmissão disponível")
@@ -70,11 +71,13 @@ class Viewer:
         self.prompt_for_transmission()
 
     def handle_frame(self, data):
-        self.logger.info("Recebendo frame de transmissão")
+        self.logger.info("handle_frame - Recebendo frame de transmissão")
+        print("Recebendo frame de transmissão")
         frame = cv2.imdecode(np.frombuffer(data['frame'], np.uint8), cv2.IMREAD_COLOR)
         img = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
         self.viewer_window.video_label.config(image=img, text="")
         self.viewer_window.video_label.image = img
+
 
     def wait_for_events(self):
         self.logger.info("Esperando eventos do servidor")
@@ -83,7 +86,8 @@ class Viewer:
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
-    viewer = Viewer(socketio.Client(), logging.getLogger("Viewer"))
+    logger = logging.getLogger("Viewer")
+    viewer = Viewer(socketio.Client(), logger)
     logger.info("Conectando ao servidor SocketIO")
     viewer.sio.connect(SERVER_URL)
     viewer.list_transmissions()

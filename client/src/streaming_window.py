@@ -156,6 +156,7 @@ class ViewerWindow(StreamingWindow):
         user_id = f"{ip}_{user_name}"
         super().__init__(sio, user_id, logger)
         self.sio.on('broadcast_frame', self.handle_frame)
+        self.logger.info(f"Viewer {user_id} inscrito para 'broadcast_frame'")
 
     def handle_frame(self, data):
         self.logger.info("handle_frame - Recebendo frame de transmissão")

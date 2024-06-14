@@ -39,10 +39,14 @@ class TransmissionHandler:
 
     def handle_frame(self, data):
         user_id = data['user_id']
+        self.logger.info(f"watchers: {self.watchers}")
+        self.logger.info(f"user_id: {user_id}")
+
         if user_id in self.watchers:
+            self.logger.info(f"entrou if")
             for watcher in self.watchers[user_id]:
-                self.logger.info(f"Emitindo frame para: user_id: {watcher}")
-                self.socketio.emit('broadcast_frame', {'frame': data['frame']}, room=watcher)
+                self.logger.info(f"Emitindo frame para watcher: {watcher['sid']}")
+                self.socketio.emit('broadcast_frame', {'frame': data['frame']}, room=watcher['sid'])
 
     def list_transmissions(self, data):
         sid = data.get('sid')
@@ -63,9 +67,9 @@ class TransmissionHandler:
             if name == transmission_name:
                 if tid not in self.watchers:
                     self.watchers[tid] = []
-                self.watchers[tid].append(sid)
+                self.watchers[tid].append({'sid': sid, 'user_id': user_id})
                 self.socketio.emit('joined_transmission', room=sid)
-                self.logger.info(f"Usuário {sid} juntou-se à transmissão {transmission_name}")
+                self.logger.info(f"Usuário {sid} ({user_id}) juntou-se à transmissão {transmission_name}")
                 return
         self.logger.info(f"Transmissão {transmission_name} não encontrada para {sid}")
         self.socketio.emit('transmission_not_found', room=sid)

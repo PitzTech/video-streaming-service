@@ -143,7 +143,7 @@ class BroadcasterWindow(StreamingWindow):
             self.video_label.image = img
 
             _, buffer = cv2.imencode('.jpg', frame)
-            self.sio.emit('broadcast_frame_server', {'user_id': self.user_id, 'frame': buffer.tobytes()})
+            self.sio.emit('broadcast_frame', {'user_id': self.user_id, 'frame': buffer.tobytes()})
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -155,7 +155,7 @@ class ViewerWindow(StreamingWindow):
         ip = get_ip()
         user_id = f"{ip}_{user_name}"
         super().__init__(sio, user_id, logger)
-        self.sio.on('broadcast_frame_client', self.handle_frame)
+        self.sio.on('broadcast_frame', self.handle_frame)
 
     def handle_frame(self, data):
         self.logger.info("handle_frame - Recebendo frame de transmissão")

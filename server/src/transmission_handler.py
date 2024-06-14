@@ -11,7 +11,7 @@ class TransmissionHandler:
         # Registrar eventos Socket.IO
         self.socketio.on_event('start_transmission', self.start_transmission)
         self.socketio.on_event('stop_transmission', self.stop_transmission)
-        self.socketio.on_event('broadcast_frame_server', self.handle_frame)
+        self.socketio.on_event('broadcast_frame', self.handle_frame)
         self.socketio.on_event('list_transmissions', self.list_transmissions)
         self.socketio.on_event('join_transmission', self.join_transmission)
 

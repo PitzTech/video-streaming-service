@@ -122,7 +122,7 @@ class BroadcasterWindow(StreamingWindow):
         self.name = user_name
         super().__init__(sio, user_id, logger)
         self.transmitting = True
-        self.sio.emit('start_transmission', {'sid': self.sio.sid, 'user_name': self.name})
+        self.sio.emit('start_transmission', {'sid': self.sio.sid, 'user_name': self.name, 'user_id': user_id})
 
         # Executa a captura de vídeo em uma thread separada
         video_thread = Thread(target=self.capture_video)
@@ -143,7 +143,7 @@ class BroadcasterWindow(StreamingWindow):
             self.video_label.image = img
 
             _, buffer = cv2.imencode('.jpg', frame)
-            self.sio.emit('broadcast_frame', {'user_id': self.user_id, 'frame': buffer.tobytes()})
+            self.sio.emit('broadcast_frame_server', {'user_id': self.user_id, 'frame': buffer.tobytes()})
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -155,9 +155,10 @@ class ViewerWindow(StreamingWindow):
         ip = get_ip()
         user_id = f"{ip}_{user_name}"
         super().__init__(sio, user_id, logger)
-        self.sio.on('broadcast_frame', self.handle_frame)
+        self.sio.on('broadcast_frame_client', self.handle_frame)
 
     def handle_frame(self, data):
+        self.logger.info("handle_frame - Recebendo frame de transmissão")
         frame = cv2.imdecode(np.frombuffer(data['frame'], np.uint8), cv2.IMREAD_COLOR)
         img = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
         self.video_label.config(image=img, text="")

@@ -4,7 +4,10 @@ from dotenv import load_dotenv
 import os
 import numpy as np
 from threading import Thread
-from src.streaming_window import ViewerWindow
+from PIL import Image, ImageTk
+import logging
+
+from src.streaming_window import ViewerWindow, get_ip
 
 load_dotenv()
 
@@ -20,6 +23,7 @@ class Viewer:
         self.sio.on('transmission_not_found', self.transmission_not_found)
         self.transmissions = []
         self.logger = logger
+        self.viewer_window = None
 
     def list_transmissions(self):
         self.logger.info("Listando transmissões")
@@ -43,9 +47,11 @@ class Viewer:
         choice = input("Escolha uma transmissão para assistir: ")
         if choice.isdigit() and 1 <= int(choice) <= len(self.transmissions):
             transmission_name = self.transmissions[int(choice) - 1]
-            self.sio.emit('join_transmission', {'transmission_name': transmission_name, 'sid': self.sio.sid})
-            viewer_window = ViewerWindow(self.sio, f"Viewer_{transmission_name}", self.logger)
-            viewer_window.start()
+            self.logger.info(f"Tentando se conectar à transmissão: {transmission_name}")
+            user_id = f"{get_ip()}_Viewer"
+            self.sio.emit('join_transmission', {'transmission_name': transmission_name, 'sid': self.sio.sid, 'user_id': user_id})
+            self.viewer_window = ViewerWindow(self.sio, f"Viewer_{transmission_name}", self.logger)
+            self.viewer_window.start()
         else:
             print("Escolha inválida, tente novamente.")
             self.prompt_for_transmission()
@@ -64,11 +70,11 @@ class Viewer:
         self.prompt_for_transmission()
 
     def handle_frame(self, data):
+        self.logger.info("Recebendo frame de transmissão")
         frame = cv2.imdecode(np.frombuffer(data['frame'], np.uint8), cv2.IMREAD_COLOR)
-        cv2.imshow('Assistindo', frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            self.sio.disconnect()
-            cv2.destroyAllWindows()
+        img = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+        self.viewer_window.video_label.config(image=img, text="")
+        self.viewer_window.video_label.image = img
 
     def wait_for_events(self):
         self.logger.info("Esperando eventos do servidor")
@@ -78,6 +84,7 @@ if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
     viewer = Viewer(socketio.Client(), logging.getLogger("Viewer"))
+    logger.info("Conectando ao servidor SocketIO")
     viewer.sio.connect(SERVER_URL)
     viewer.list_transmissions()
     viewer.wait_for_events()

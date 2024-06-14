@@ -1,16 +1,26 @@
-# video-streaming-service
+# Video Streaming Service
 
+Este repositório contém dois projetos: o servidor e o cliente para um serviço de streaming de vídeo e chat em tempo real.
 
+## Estrutura do Repositório
 
-poetry add packageName
+- **server**: Contém a aplicação do servidor responsável por centralizar as transmissões e chats.
+- **client**: Contém a aplicação do cliente que permite transmitir e assistir transmissões.
 
-poetry add pytest --group dev
+## Como Executar
 
-poetry install
+### Requisitos
 
-poetry shell // starts env
-deactivate
+- Python 3.11+
+- Poetry
 
+### Passos para Executar
 
+1. Clone o repositório:
+   ```sh
+   git clone <URL_do_repositorio>
 
-Documente todo o código e criar um README detalhado.
+# Authors:
+- Vinícius Gomes Marques - 2212130024
+- Victor Laurentino do Nascimento - 2312130047
+

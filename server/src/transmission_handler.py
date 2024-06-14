@@ -46,6 +46,7 @@ class TransmissionHandler:
             self.logger.info(f"entrou if")
             for watcher in self.watchers[user_id]:
                 self.logger.info(f"Emitindo frame para watcher: {watcher['sid']}")
+                self.logger.info(f"Dados do frame: {len(data['frame'])} bytes")
                 self.socketio.emit('broadcast_frame', {'frame': data['frame']}, room=watcher['sid'])
 
     def list_transmissions(self, data):

@@ -72,11 +72,16 @@ class Viewer:
 
     def handle_frame(self, data):
         self.logger.info("handle_frame - Recebendo frame de transmissão")
-        print("Recebendo frame de transmissão")
-        frame = cv2.imdecode(np.frombuffer(data['frame'], np.uint8), cv2.IMREAD_COLOR)
-        img = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
-        self.viewer_window.video_label.config(image=img, text="")
-        self.viewer_window.video_label.image = img
+        if 'frame' in data:
+            self.logger.info("Frame recebido com sucesso")
+            frame = cv2.imdecode(np.frombuffer(data['frame'], np.uint8), cv2.IMREAD_COLOR)
+            img = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+            self.viewer_window.video_label.config(image=img, text="")
+            self.viewer_window.video_label.image = img
+            self.logger.info("Frame exibido com sucesso")
+        else:
+            self.logger.warning("Frame não encontrado nos dados recebidos")
+
 
 
     def wait_for_events(self):

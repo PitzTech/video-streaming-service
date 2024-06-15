@@ -21,6 +21,7 @@ Este repositório contém dois projetos: o servidor e o cliente para um serviço
    git clone <URL_do_repositorio>
 
 # Authors:
-- Vinícius Gomes Marques - 2212130024
 - Victor Laurentino do Nascimento - 2312130047
+- Vinícius Gomes Marques - 2212130024
+
 

@@ -1,6 +1,5 @@
 ### README do Cliente
 
-```markdown
 # Cliente de Streaming de Vídeo
 
 Este é o cliente para o serviço de streaming de vídeo e chat em tempo real.

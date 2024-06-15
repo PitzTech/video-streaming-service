@@ -19,3 +19,6 @@ Este é o servidor para o serviço de streaming de vídeo e chat em tempo real.
 1. Navegue até a pasta do projeto:
    ```sh
    cd server
+   poetry shell
+   poetry install
+   poetry run start

@@ -21,3 +21,6 @@ Este é o cliente para o serviço de streaming de vídeo e chat em tempo real.
 1. Navegue até a pasta do projeto:
    ```sh
    cd client
+   poetry shell
+   poetry install
+   poetry run start
